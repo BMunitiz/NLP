@@ -1,138 +1,84 @@
-# Character-Level LSTM Text Generation
 
-A deep learning project that implements a character-level LSTM (Long Short-Term Memory) model for generating text in the style of Friedrich Nietzsche's writings.
+# Character‑Level LSTM Text Generation (Improved)
+
+This repository contains an improved Jupyter notebook that trains a character‑level LSTM model on Nietzsche’s writings and generates new text with adjustable “temperature” (randomness). The improvements over a basic implementation focus on memory efficiency, training stability, code clarity, and robust sampling.
 
 ## Overview
 
-This project demonstrates text generation using a recurrent neural network with LSTM layers. The model learns the patterns and style of Nietzsche's philosophical texts and can generate new text that mimics his writing style.
+The notebook:
 
-## Features
+- Downloads Nietzsche’s text (`nietzsche.txt`) from a public URL.
+- Converts the text to lowercase and builds character‑level vocabulary.
+- Uses **integer encoding** and an **Embedding layer** (instead of one‑hot encoding) to drastically reduce memory usage.
+- Implements a **generator** that yields batches on the fly – no need to store the whole dataset in RAM.
+- Builds an LSTM model with **dropout**, **recurrent dropout**, and **gradient clipping** for stable training.
+- Saves the best model during training via `ModelCheckpoint` and stops early if loss does not improve.
+- Generates text at the end of each epoch with multiple temperatures for monitoring.
+- Fixes a common bug where the seed text was not reset between temperature runs.
+- Provides a final generation function that uses `np.random.choice` to avoid numerical precision errors.
 
-- **Character-Level Text Generation**: Processes text at the character level rather than word level
-- **Temperature Sampling**: Implements temperature-based probability distribution for controlled text generation
-- **Real-time Training Monitoring**: Generates sample text during training to observe model improvement
-- **Multiple Temperature Settings**: Tests text generation at different creativity levels (0.2, 0.5, 1.0, 1.2)
+## Key Improvements
 
-## Model Architecture
+| Area | Improvement |
+|------|--------------|
+| **Memory** | Integer encoding + Embedding layer; data generator. |
+| **Stability** | Dropout (0.2), recurrent dropout (0.2), gradient clipping (norm=1.0). |
+| **Training** | Single `fit` call with callbacks; Adam optimizer; early stopping. |
+| **Generation** | Resets seed for each temperature; uses `np.random.choice` for robust sampling. |
+| **Code Quality** | Functions and classes; clear markdown explanations; typos fixed. |
 
-### Neural Network Structure
-- **Input Layer**: One-hot encoded character sequences (60 characters)
-- **LSTM Layer**: 256 units with return sequences
-- **Output Layer**: Dense layer with softmax activation (57 units - one per character)
+## Requirements
 
-### Model Parameters
-- **Total Parameters**: 336,185
-- **Trainable Parameters**: 336,185
-- **Input Shape**: (60, 57) - (sequence length, number of unique characters)
+Install the required packages (preferably in a virtual environment):
 
-## Dataset
-
-- **Source**: Nietzsche's writings from `nietzsche.txt`
-- **Corpus Length**: 600,893 characters
-- **Unique Characters**: 57 distinct characters
-- **Preprocessing**: Text converted to lowercase
-
-## Data Preparation
-
-### Sequence Generation
-- **Sequence Length**: 60 characters
-- **Step Size**: 3 characters between sequences
-- **Total Sequences**: 200,278 training examples
-
-### Vectorization
-- One-hot encoding of characters into binary arrays
-- Input shape: `(len(sentences), maxlen, len(chars))`
-- Output shape: `(len(sentences), len(chars))`
-
-## Key Functions
-
-### `reweight_distribution(original_distribution, temperature=0.5)`
-Adjusts probability distribution using temperature parameter:
-- Lower temperature (0.2): More deterministic, conservative text
-- Higher temperature (1.2): More creative, random text
-
-### `sample(preds, temperature=1.0)`
-Samples the next character from model predictions using temperature-controlled randomness
-
-### Text Generation Loop
-- Trains model for 60 epochs
-- Generates 400-character samples at different temperatures after each epoch
-- Uses random seed texts from the original corpus
-
-## Training Configuration
-
-- **Optimizer**: RMSprop with learning rate 0.01
-- **Loss Function**: Categorical crossentropy
-- **Batch Size**: 128
-- **Epochs**: 60
-- **Training Time**: ~170 seconds per epoch
-
-## Text Generation Process
-
-1. **Seed Selection**: Random 60-character sequence from source text
-2. **Character Prediction**: Model predicts next character probabilities
-3. **Temperature Sampling**: Adjusts randomness of character selection
-4. **Iterative Generation**: Builds text character by character (400 characters per sample)
-
-## Temperature Effects
-
-- **0.2**: Very conservative, closely follows training patterns
-- **0.5**: Balanced between creativity and coherence
-- **1.0**: Standard sampling, moderate creativity
-- **1.2**: High creativity, more experimental text
-
-## Dependencies
-
-```python
-import numpy as np
-import keras
-from keras import layers
-import random
-import sys
+```bash
+pip install tensorflow numpy
 ```
 
-## Usage
+The notebook uses only `tensorflow` (>=2.0) and `numpy`. All other modules are part of the Python standard library.
 
-1. **Data Loading**: Automatically downloads Nietzsche's texts
-2. **Preprocessing**: Converts text to sequences and one-hot encoding
-3. **Model Training**: Runs for 60 epochs with batch size 128
-4. **Text Generation**: Produces samples at various temperatures during training
+## How to Run
 
-## Model Performance
+1. Clone this repository or download the notebook `character_level_text_LSTM.ipynb`.
+2. Open the notebook in Jupyter Lab / Notebook, or run it in Google Colab.
+3. Execute the cells in order. The first run will download the Nietzsche text (~600 KB).
+4. Training will start automatically. It will run for up to 60 epochs, but early stopping may halt it earlier if loss stops improving.
+5. Generated text will appear both during training (end of each epoch) and after training (final generation cell).
 
-- **Initial Loss**: ~0.82 (epoch 1)
-- **Final Loss**: ~0.73 (epoch 30+)
-- **Training Stability**: Consistent improvement over 60 epochs
-- **Text Quality**: Gradual improvement in coherence and style matching
+### Example Output (after 30 epochs, temperature 0.5)
 
-## Sample Output
+```
+ of all that women write about "woman," we may well have
+constatis wat they nave beenson on pheroodd---that it have baidd and chaidd at loadn ...
+```
 
-The model generates text that:
-- Mimics Nietzsche's philosophical style
-- Maintains grammatical structure
-- Shows thematic coherence with training data
-- Varies in creativity based on temperature setting
+## Customisation
 
-## Technical Notes
+- **Change the text source**: Replace the `url` in the `get_file` call with any plain‑text file.
+- **Adjust model size**: Modify `embedding_dim` and `lstm_units`.
+- **Change generation length**: Update the `generate_len` parameter in `TextGenerator` or the `length` argument in `generate_text`.
+- **Tune hyperparameters**: `maxlen` (sequence length), `batch_size`, `learning_rate`, `dropout` rates, etc.
 
-- The model operates at character level, allowing it to learn punctuation and formatting
-- Temperature parameter controls the trade-off between creativity and coherence
-- Training includes real-time generation to monitor progress
-- Model can be extended with multiple LSTM layers or different architectures
+## Important Note on Sampling
 
-## Potential Improvements
+The sampling function uses temperature reweighting:
 
-- Adding multiple LSTM layers for deeper learning
-- Implementing beam search for better text generation
-- Adding attention mechanisms
-- Training on larger datasets
-- Implementing early stopping based on validation loss
+```python
+probs = exp(preds / temperature) / sum(exp(preds / temperature))
+```
 
-## Applications
+- **Low temperature** (e.g., 0.2) → sharp distribution, more predictable text.
+- **High temperature** (e.g., 1.2) → flatter distribution, more creative/chaotic output.
+- The implementation adds a small epsilon (`1e-10`) to avoid `log(0)` and uses `np.random.choice` to avoid `multinomial` precision issues.
 
-- Creative writing assistance
-- Style imitation
-- Text completion
-- Educational tools for studying writing styles
+## Results and Discussion
 
-This project demonstrates the power of character-level RNNs for understanding and generating text while maintaining the unique style of the training data.
+After about 20–30 epochs the model starts producing character sequences that resemble English words and Nietzsche‑like sentence fragments. Longer training (40–60 epochs) yields even better coherence, but may overfit. The combination of dropout and gradient clipping prevents the loss spikes observed in the original implementation.
+
+The notebook provides a solid foundation for experimenting with:
+
+- Deeper LSTM architectures (e.g., stacked LSTMs).
+- Bidirectional LSTM layers.
+- Different sampling strategies (top‑k, top‑p / nucleus sampling).
+- Keeping case sensitivity (removing the `.lower()` call).
+
