@@ -1,5 +1,5 @@
 
-# Character‑Level LSTM Text Generation (Improved)
+# Character‑Level LSTM Text Generation 
 
 This repository contains an improved Jupyter notebook that trains a character‑level LSTM model on Nietzsche’s writings and generates new text with adjustable “temperature” (randomness). The improvements over a basic implementation focus on memory efficiency, training stability, code clarity, and robust sampling.
 
